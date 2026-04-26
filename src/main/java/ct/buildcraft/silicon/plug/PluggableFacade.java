@@ -164,7 +164,7 @@ public class PluggableFacade extends PipePluggable implements IFacade {
             ChunkRenderTypeSet targetLayer = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockState)
             		.getRenderTypes(blockState, RandomSource.create(42), ModelData.EMPTY);
             if (targetLayer.contains(RenderType.translucent())) {
-                if (targetLayer.contains(layer)) {
+                if (layer != RenderType.translucent()) {
                     return null;
                 }
             } else if (layer == RenderType.translucent()) {

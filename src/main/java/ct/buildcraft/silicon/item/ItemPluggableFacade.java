@@ -143,7 +143,10 @@ public class ItemPluggableFacade extends Item implements IItemPluggable, IFacade
         FacadeInstance fullState = getStates(stack);
         if (fullState.type == FacadeType.Basic) {
             String displayName = getFacadeStateDisplayName(fullState.phasedStates[0]);
-            return Component.translatable(super.getDescriptionId(stack) + ": " + displayName);
+            return Component.translatable("item.Facade.name")
+                .append(" [")
+                .append(Component.literal(displayName))
+                .append("]");
         } else {
             return Component.translatable("item.FacadePhased.name");
         }
@@ -151,10 +154,15 @@ public class ItemPluggableFacade extends Item implements IItemPluggable, IFacade
 
     public static String getFacadeStateDisplayName(FacadePhasedState state) {
         ItemStack assumedStack = state.stateInfo.requiredStack;
-        return assumedStack.getDisplayName().getString();
+        return stripOuterSquareBrackets(assumedStack.getDisplayName().getString());
     }
-    
-    
+
+    private static String stripOuterSquareBrackets(String name) {
+        if (name != null && name.length() >= 2 && name.startsWith("[") && name.endsWith("]")) {
+            return name.substring(1, name.length() - 1);
+        }
+        return name;
+    }
 
     @Override
     @OnlyIn(Dist.CLIENT)

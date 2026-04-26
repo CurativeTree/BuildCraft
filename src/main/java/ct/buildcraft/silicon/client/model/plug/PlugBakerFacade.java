@@ -38,6 +38,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @OnlyIn(Dist.CLIENT)
 public enum PlugBakerFacade implements IPluggableStaticBaker<KeyPlugFacade> {
@@ -287,7 +288,21 @@ public enum PlugBakerFacade implements IPluggableStaticBaker<KeyPlugFacade> {
                 quad.setTint(tint * Direction.values().length + key.side.ordinal());
             }
         }
+        if (isColouredGlass(key.state)) {
+            for (MutableQuad quad : quads) {
+                quad.multColourd(1.0, 1.0, 1.0, 0.4);
+            }
+        }
         return quads;
+    }
+
+    private static boolean isColouredGlass(BlockState state) {
+        var key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        if (key == null) {
+            return false;
+        }
+        String path = key.getPath();
+        return path.endsWith("_stained_glass") || path.endsWith("_stained_glass_pane") || path.equals("stained_glass") || path.equals("stained_glass_pane");
     }
 
     @Override
