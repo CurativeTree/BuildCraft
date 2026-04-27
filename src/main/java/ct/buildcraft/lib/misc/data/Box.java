@@ -263,15 +263,6 @@ public class Box implements IBox {
 
     public boolean doesIntersectWith(Box box) {
         if (isInitialized() && box.isInitialized()) {
-            return min.getX() < box.max.getX() && max.getX() > box.min.getX()//
-                && min.getY() < box.max.getY() && max.getY() > box.min.getY() //
-                && min.getZ() < box.max.getZ() && max.getZ() > box.min.getZ();
-        }
-        return false;
-    }
-    
-    public boolean doesTouchWith(Box box) {
-        if (isInitialized() && box.isInitialized()) {
             return min.getX() <= box.max.getX() && max.getX() >= box.min.getX()//
                 && min.getY() <= box.max.getY() && max.getY() >= box.min.getY() //
                 && min.getZ() <= box.max.getZ() && max.getZ() >= box.min.getZ();
@@ -283,17 +274,6 @@ public class Box implements IBox {
     @Nullable
     public Box getIntersect(Box box) {
         if (doesIntersectWith(box)) {
-            BlockPos min2 = VecUtil.max(min, box.min);
-            BlockPos max2 = VecUtil.min(max, box.max);
-            return new Box(min2, max2);
-        }
-        return null;
-    }
-    
-    /** @return The touch box (if these two boxes are touching) or null if they were not. */
-    @Nullable
-    public Box getTouch(Box box) {
-        if (doesTouchWith(box)) {
             BlockPos min2 = VecUtil.max(min, box.min);
             BlockPos max2 = VecUtil.min(max, box.max);
             return new Box(min2, max2);
