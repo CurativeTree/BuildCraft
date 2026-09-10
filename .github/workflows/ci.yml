@@ -147,7 +147,37 @@ jobs:
         run: |
           set -euo pipefail
           cd "builds/${BUILD_GENERATION}"
-          ./gradlew --no-daemon --console=plain --stacktrace buildAndCollect
+
+          build_log="$(mktemp)"
+          set +e
+          ./gradlew --no-daemon --console=plain --stacktrace buildAndCollect 2>&1 | tee "$build_log"
+          build_status=${PIPESTATUS[0]}
+          set -e
+
+          if [[ "$build_status" -eq 0 ]]; then
+            exit 0
+          fi
+
+          # ForgeGradle occasionally leaves a truncated/corrupt transformed JAR in
+          # Gradle User Home (or restores one from the Actions cache). Only retry
+          # failures that are unmistakably ZIP/JAR corruption; real compile/test
+          # failures still fail immediately with their original status.
+          if [[ "$BUILD_GENERATION" != "legacy" ]] || ! grep -Eq \
+            'ZipException|invalid LOC header|zip END header not found' "$build_log"; then
+            exit "$build_status"
+          fi
+
+          echo "::warning title=ForgeGradle cache corruption::Corrupt JAR/ZIP detected while building legacy targets; clearing ForgeGradle dependency caches and retrying once."
+
+          rm -rf \
+            "$HOME/.gradle/caches/forge_gradle" \
+            "$HOME/.gradle/caches/modules-2/files-2.1/maven.modrinth" \
+            "$HOME/.gradle/caches/modules-2/files-2.1/net.minecraftforge"
+          find versions -type d -name fg_cache -prune -exec rm -rf {} +
+
+          # Retry sequentially so a cold ForgeGradle cache is rebuilt without
+          # concurrent target transforms fighting over shared cache state.
+          ./gradlew --no-daemon --no-parallel --console=plain --stacktrace --refresh-dependencies buildAndCollect
 
       - name: Run GameTests for every production target in generation
         shell: bash
