@@ -110,6 +110,9 @@ public class BlueprintBuilder extends SnapshotBuilder<ITileForBlueprintBuilder> 
     @Override
     public void updateSnapshot() {
         super.updateSnapshot();
+        if (!isInitialized()) {
+            return;
+        }
         extractRequiredCache.clear();
         robotReservedBlocks.clear();
         deferredInventoryCursor = 0;

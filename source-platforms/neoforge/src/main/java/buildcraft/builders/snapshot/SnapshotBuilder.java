@@ -359,24 +359,32 @@ public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> impleme
     }
 
     public void updateSnapshot() {
+        Snapshot.BuildingInfo buildingInfo = getBuildingInfo();
+        if (buildingInfo == null) {
+            // Client block entities may receive the marker box before the filler pattern/building info.
+            // Treat that transient state as "not initialized" instead of dereferencing a missing snapshot.
+            cancel();
+            return;
+        }
+
         tile.getWorldBC().getProfiler().push("init");
-        int size = getBuildingInfo().box.size().getX() *
-            getBuildingInfo().box.size().getY() *
-            getBuildingInfo().box.size().getZ();
+        int size = buildingInfo.box.size().getX() *
+            buildingInfo.box.size().getY() *
+            buildingInfo.box.size().getZ();
         checkResults = new byte[size];
         Arrays.fill(checkResults, CHECK_RESULT_UNKNOWN);
         unknownCheckResults = checkResults.length;
         requiredCache = new byte[size];
         Arrays.fill(requiredCache, REQUIRED_UNKNOWN);
-        breakOrder = getBuildingInfo().box.getBlocksInArea().stream()
+        breakOrder = buildingInfo.box.getBlocksInArea().stream()
             .sorted(BlockUtil.uniqueBlockPosComparator(Comparator.comparingDouble(blockPos ->
-                Math.pow(blockPos.getX() - getBuildingInfo().box.center().getX(), 2) +
-                    Math.pow(blockPos.getZ() - getBuildingInfo().box.center().getZ(), 2) +
+                Math.pow(blockPos.getX() - buildingInfo.box.center().getX(), 2) +
+                    Math.pow(blockPos.getZ() - buildingInfo.box.center().getZ(), 2) +
                     100_000 - Math.abs(blockPos.getY() - tile.getBuilderPos().getY()) * 100_000
             )))
             .mapToInt(this::posToIndex)
             .toArray();
-        placeOrder = getBuildingInfo().box.getBlocksInArea().stream()
+        placeOrder = buildingInfo.box.getBlocksInArea().stream()
             .sorted(BlockUtil.uniqueBlockPosComparator(Comparator.comparingDouble(blockPos ->
                 100_000 - (Math.pow(blockPos.getX() - tile.getBuilderPos().getX(), 2) +
                     Math.pow(blockPos.getZ() - tile.getBuilderPos().getZ(), 2)) +
@@ -384,11 +392,11 @@ public abstract class SnapshotBuilder<T extends ITileForSnapshotBuilder> impleme
             )))
             .mapToInt(this::posToIndex)
             .toArray();
-        checkOrder = getBuildingInfo().box.getBlocksInArea().stream()
+        checkOrder = buildingInfo.box.getBlocksInArea().stream()
             .sorted(BlockUtil.uniqueBlockPosComparator(Comparator.comparingDouble(blockPos ->
-                Math.pow(blockPos.getX() - getBuildingInfo().box.center().getX(), 2) +
-                    Math.pow(blockPos.getY() - getBuildingInfo().box.center().getY(), 2) +
-                    Math.pow(blockPos.getZ() - getBuildingInfo().box.center().getZ(), 2)
+                Math.pow(blockPos.getX() - buildingInfo.box.center().getX(), 2) +
+                    Math.pow(blockPos.getY() - buildingInfo.box.center().getY(), 2) +
+                    Math.pow(blockPos.getZ() - buildingInfo.box.center().getZ(), 2)
             )))
             .mapToInt(this::posToIndex)
             .toArray();

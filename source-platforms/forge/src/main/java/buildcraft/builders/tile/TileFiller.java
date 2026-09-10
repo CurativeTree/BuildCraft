@@ -412,7 +412,12 @@ public class TileFiller extends TileBC_Neptune
                 .toArray(IStatementParameter[]::new),
             inverted
         ) : null;
-        Optional.ofNullable(getBuilder()).ifPresent(SnapshotBuilder::updateSnapshot);
+        // On a remote client the marker box can already be initialized while the default "none" pattern
+        // still produces no BuildingInfo. getBuilder() intentionally remains available client-side for task
+        // rendering, so gate snapshot initialization on the actual effective BuildingInfo instead.
+        if (getTemplateBuildingInfo() != null) {
+            Optional.ofNullable(getBuilder()).ifPresent(SnapshotBuilder::updateSnapshot);
+        }
     }
 
     public void sendCanExcavate(boolean newValue) {

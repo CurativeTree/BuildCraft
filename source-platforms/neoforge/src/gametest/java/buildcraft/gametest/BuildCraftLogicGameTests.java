@@ -525,6 +525,24 @@ public final class BuildCraftLogicGameTests {
     }
 
     @GameTest(templateNamespace = BCLib.MODID, template = EMPTY_TEMPLATE, timeoutTicks = 20)
+    public static void snapshotBuilderIgnoresMissingBuildingInfo(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        ProbeTemplateBuilder templateBuilder = new ProbeTemplateBuilder(new ProbeTemplateTile(helper.getLevel(), pos));
+        BlueprintBuilder blueprintBuilder = new BlueprintBuilder(
+            new ProbeBlueprintTile(helper.getLevel(), pos, new ItemHandlerSimple(1))
+        );
+
+        templateBuilder.updateSnapshot();
+        blueprintBuilder.updateSnapshot();
+
+        require(helper, !templateBuilder.isInitialized(),
+            "template builder initialized without BuildingInfo instead of waiting for synchronized filler data");
+        require(helper, !blueprintBuilder.isInitialized(),
+            "blueprint builder initialized without BuildingInfo instead of waiting for synchronized snapshot data");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = BCLib.MODID, template = EMPTY_TEMPLATE, timeoutTicks = 20)
     public static void quarryFluidTraversalMatchesBc8ViscosityRules(GameTestHelper helper) {
         TileQuarry quarry = placeQuarry(helper, new BlockPos(1, 1, 1));
         // Keep the fixtures separated: placing source lava directly beside water immediately converts the lava to
